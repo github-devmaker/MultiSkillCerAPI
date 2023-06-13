@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "D:\\git\\MultiSkillAPI\\LicenseAPI\\LicenseAPI.csproj": {}
+    "D:\\git\\MultiSkillCerAPI\\LicenseAPI\\LicenseAPI.csproj": {}
   },
   "projects": {
-    "D:\\git\\MultiSkillAPI\\LicenseAPI\\LicenseAPI.csproj": {
+    "D:\\git\\MultiSkillCerAPI\\LicenseAPI\\LicenseAPI.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\git\\MultiSkillAPI\\LicenseAPI\\LicenseAPI.csproj",
+        "projectUniqueName": "D:\\git\\MultiSkillCerAPI\\LicenseAPI\\LicenseAPI.csproj",
         "projectName": "LicenseAPI",
-        "projectPath": "D:\\git\\MultiSkillAPI\\LicenseAPI\\LicenseAPI.csproj",
+        "projectPath": "D:\\git\\MultiSkillCerAPI\\LicenseAPI\\LicenseAPI.csproj",
         "packagesPath": "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\",
-        "outputPath": "D:\\git\\MultiSkillAPI\\LicenseAPI\\obj\\",
+        "outputPath": "D:\\git\\MultiSkillCerAPI\\LicenseAPI\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\peerapong.k.ITNB17_41256\\AppData\\Roaming\\NuGet\\NuGet.Config",
