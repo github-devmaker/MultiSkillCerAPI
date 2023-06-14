@@ -451,8 +451,10 @@ namespace LicenseAPI.Controllers
 
 
         [HttpGet]
-        [Route("/accumulate/{line}/{st}/{stOld}")]
-        public IActionResult grafana(string line,string st,string stOld)
+        //[Route("/accumulate/{line}/{st}/{stOld}")]
+        //public IActionResult grafana(string line,string st,string stOld)
+        [Route("/accumulate/{line}/{st}")]
+        public IActionResult GetAccumulate(string line, string st)
         {
             List<ItemChart> itemChart = new List<ItemChart>();
             DateTime SDate = DateTime.Parse(DateTime.Now.ToString("yyyy-MM-dd 08:00:00"));
@@ -460,8 +462,8 @@ namespace LicenseAPI.Controllers
             DateTime endDate = DateTime.Today;
             endDate = endDate.AddMonths(-5);
             var lastLogin = (from x in _contextDbSCM.SkcCheckInOutLogs where x.DictCode == st select new { x.ChkEmpcode ,x.ChkId}).OrderByDescending(x=>x.ChkId).FirstOrDefault();
-
-
+            int Year = DateTime.Now.AddYears(DateTime.Now.Month <= 4 ? -1 : 0).Year;
+            DateTime FirstDateOfYear = DateTime.Parse(Convert.ToString(Year) + "-04-01 08:00:00");
             //var LeakCheck = _contextDbIoTFac2.EtdLeakChecks.Where(x => (x.StampTime >= SDate && x.StampTime <= EDate) && x.LineName == line && x.Brazing == stOld).GroupBy(x => x.EmpCode).Select(g => new { CntSerialNo = g.Count(), EmpCode = g.Key });
             try
             {
@@ -471,18 +473,21 @@ namespace LicenseAPI.Controllers
                     //var empCode = LeakCheck.FirstOrDefault().EmpCode;
                     var empCode = lastLogin.ChkEmpcode;
                     var daily = (from x in _contextDbIoTFac2.BrazingCertDataLogs
-                                 where x.EmpCode == empCode && (x.UpdateDate >= SDate && x.UpdateDate <= EDate)
+                                 where x.EmpCode == empCode && x.Pddate == DateTime.Now.Date
                                  select new { x.CountFg, x.CountNg }).FirstOrDefault();
+
                     //var accusFG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
                     //               where x.EmpCode == empCode && x.Line == line
                     //               select new { CountFG = x.CountFg });
-                    var accusFG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
+
+                    var accuFG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
                                  where x.EmpCode == empCode
                                  select new { CountFG = x.CountFg });
-                    var accusNG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
+                    var accuNG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
                                    where x.EmpCode == empCode 
-                                   && x.Pddate >= DateTime.Parse("2023-01-01") && x.Pddate <= DateTime.Now
-                                   select new { CountNG = x.CountNg });
+                                   && x.UpdateDate >= FirstDateOfYear && x.UpdateDate <= DateTime.Now
+                                   select new { CountNG = x.CountNg }); // WHERE วันแรกที่ตัดรอบบิลวันที่ 1 เดือน 4
+
                     //var accus = (from x in _contextDbIoTFac2.BrazingCertDataLogs
                     //             where x.EmpCode == empCode && x.Pddate >= DateTime.Parse(DateTime.Now.ToString("yyyy-01-01")) && x.Pddate >= DateTime.Parse(DateTime.Now.ToString("yyyy-MM-dd"))
                     //             select new { CountNG = x.CountNg, CountFG = x.CountFg });
@@ -495,57 +500,45 @@ namespace LicenseAPI.Controllers
                         itemChart.Add(new ItemChart() { ng = Convert.ToInt32(dataMonth), month = (endDate.ToString("MMM") + "-" + (endDate.Year.ToString()).Substring(2, 2)) });
                         endDate = endDate.AddMonths(1);
                     }
-                    if (daily != null)
-                    {
-                        return Ok(new { daily = new { ok = daily.CountFg, ng = daily.CountNg }, accu = new { ok = accusFG.Sum(x => x.CountFG), ng = accusNG.Sum(x => x.CountNG) }, chart = itemChart });
-                    }
-                    else
-                    {
-                        return Ok(new { daily = new { ok = 0, ng = 0 }, accu = new { ok = 0, ng = 0 }, chart = itemChart });
-                    }
+                    //if (daily != null)
+                    //{
+                    //    return Ok(new { daily = new { ok = daily.CountFg, ng = daily.CountNg }, accu = new { ok = accuFG.Sum(x => x.CountFG), ng = accuNG.Sum(x => x.CountNG) }, chart = itemChart });
+                    //}
+                    //else
+                    //{
+                    //    return Ok(new { daily = new { ok = 0, ng = 0 }, accu = new { ok = 0, ng = 0 }, chart = itemChart });
+                    //}
+                    return Ok(new { daily = new { ok = (daily != null ? daily.CountFg : 0), ng = (daily != null ? daily.CountNg : 0)}, accu = new { ok = accuFG.Sum(x => x.CountFG), ng = accuNG.Sum(x => x.CountNG) }, chart = itemChart });
                 }
                 else
                 {
                     for (int i = 1; i <= 6; i++)
                     {
-                        DateTime SDateNow = DateTime.Parse(endDate.ToString("yyyy-MM-01 08:00:00"));
-                        DateTime EDateNow = DateTime.Parse(endDate.ToString("yyyy-MM-" + DateTime.DaysInMonth(endDate.Year, endDate.Month) + " 20:00:00"));
                         itemChart.Add(new ItemChart() { ng = 0, month = (endDate.ToString("MMM") + "-" + (endDate.Year.ToString()).Substring(2, 2)) });
                         endDate = endDate.AddMonths(1);
                     }
                     return Ok(new { daily = new { ok = 0, ng = 0 }, accu = new { ok = 0, ng = 0 }, chart = itemChart });
                 }
             }
-            catch
+            catch(Exception e)
             {
                 for (int i = 1; i <= 6; i++)
                 {
-                    DateTime SDateNow = DateTime.Parse(endDate.ToString("yyyy-MM-01 08:00:00"));
-                    DateTime EDateNow = DateTime.Parse(endDate.ToString("yyyy-MM-" + DateTime.DaysInMonth(endDate.Year, endDate.Month) + " 20:00:00"));
                     itemChart.Add(new ItemChart() { ng = 0, month = (endDate.ToString("MMM") + "-" + (endDate.Year.ToString()).Substring(2, 2)) });
                     endDate = endDate.AddMonths(1);
                 }
                 return Ok(new { daily = new { ok = 0, ng = 0 }, accu = new { ok = 0, ng = 0 }, chart = itemChart });
             }
-          
-           
-
             //var Accu = _contextDbIoTFac2.EtdLeakChecks.Where(x => x.EmpCode != null && x.EmpCode != "" && x.EmpCode != "NULL").GroupBy(x => x.EmpCode).Select(g => new { Accumulate = g.Count(), EmpCode = g.Key });
 
             //var result = (from leak in LeakCheck.DefaultIfEmpty()
             //              join accu in Accu
             //              on leak.EmpCode equals accu.EmpCode
             //              select accu.Accumulate);
-
-           
-
             //var okAccu = (from x in _contextDbIoTFac2.BrazingCertDataLogs
             //              where x.EmpCode == empCode
             //              select new { x.CountFg }
             //              ).Sum(x => x.CountFg);
-
-          
-          
         }
 
         [HttpPost]
