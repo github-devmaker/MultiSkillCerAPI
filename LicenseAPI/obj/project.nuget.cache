@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "v4SC/Btb4OLJ7z8123q3EzTSlaIPb44pMTe8KoTtgRuOTt9HIaEQ+WjrkmRn54UmPDUDEhn9aVz7wEJg69gaKQ==",
+  "dgSpecHash": "esXg5TUBo2eouGop8JuT1/C2gf53Y4kWlJ20Kt0sjG+Iaqm/QahX4d35EbX0G/owuhR4+b1+RiN95XSX9pGcXg==",
   "success": true,
   "projectFilePath": "D:\\git\\MultiSkillCerAPI\\LicenseAPI\\LicenseAPI.csproj",
   "expectedPackageFiles": [
@@ -78,7 +78,11 @@
     "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\system.text.json\\7.0.0\\system.text.json.7.0.0.nupkg.sha512",
     "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\system.threading.tasks\\4.3.0\\system.threading.tasks.4.3.0.nupkg.sha512",
     "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
-    "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\system.windows.extensions\\5.0.0\\system.windows.extensions.5.0.0.nupkg.sha512"
+    "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\system.windows.extensions\\5.0.0\\system.windows.extensions.5.0.0.nupkg.sha512",
+    "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\6.0.20\\microsoft.windowsdesktop.app.ref.6.0.20.nupkg.sha512",
+    "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\microsoft.netcore.app.ref\\6.0.20\\microsoft.netcore.app.ref.6.0.20.nupkg.sha512",
+    "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\6.0.20\\microsoft.aspnetcore.app.ref.6.0.20.nupkg.sha512",
+    "C:\\Users\\peerapong.k.ITNB17_41256\\.nuget\\packages\\microsoft.netcore.app.host.win-x64\\6.0.20\\microsoft.netcore.app.host.win-x64.6.0.20.nupkg.sha512"
   ],
   "logs": []
 }

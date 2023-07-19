@@ -202,7 +202,15 @@ namespace LicenseAPI.Controllers
             {
                 context = context.Where(x => x.RefCode == obj.RefCode).ToList();
             }
-            return Ok(new { data = context.OrderByDescending(x=>x.CreateDate) });
+            return Ok(new { data = context.OrderBy(x=>x.DictDesc) });
+        }
+
+        [HttpPost]
+        [Route("/dict/license")]
+        public IActionResult DictLicense()
+        {
+            var context =  _contextDbSCM.SkcDictMstrs.Where(x=>x.DictType == "LICENSE" && x.Code == x.RefCode && x.DictStatus == true).ToList();
+            return Ok(new { data = context.OrderBy(x=>x.DictDesc)});
         }
 
         [HttpPost]
@@ -230,14 +238,6 @@ namespace LicenseAPI.Controllers
             return Ok(listFac);
         }
 
-
-        [HttpPost]
-        [Route("/licenseMstr/getAll")]
-        public async Task<IActionResult> getLicenseList()
-        {
-            //var context = await _contextDbSCM.SkcLicenseMstrs.ToListAsync();
-            return Ok();
-        }
         [HttpPost]
         [Route("/license/user")]
         public async Task<IActionResult> getUserOfLicense([FromBody] ModelDict obj)
@@ -259,11 +259,21 @@ namespace LicenseAPI.Controllers
         [Route("/dict/delete/{dictId}")]
         public async Task<IActionResult> delDictStation(int dictId)
         {
-            var context = _contextDbSCM.SkcDictMstrs.Where(x => x.DictId == dictId);
-            if (context != null)
-            {
+            //var context = _contextDbSCM.SkcDictMstrs.Where(x => x.DictId == dictId);
+            //if (context != null)
+            //{
 
-                _contextDbSCM.SkcDictMstrs.RemoveRange(context);
+            //    _contextDbSCM.SkcDictMstrs.RemoveRange(context);
+            //    int state = await _contextDbSCM.SaveChangesAsync();
+            //    if (state >= 0)
+            //    {
+            //        return Ok(new { status = true });
+            //    }
+            //}
+            var item = await _contextDbSCM.SkcDictMstrs.FirstOrDefaultAsync(x => x.DictId == dictId);
+            if (item != null)
+            {
+                item.DictStatus = false;
                 int state = await _contextDbSCM.SaveChangesAsync();
                 if (state >= 0)
                 {
@@ -336,7 +346,7 @@ namespace LicenseAPI.Controllers
             model.DictType = obj.type;
             model.Code = runnCode;
             model.DictDesc = obj.desc;
-            model.RefCode = obj.refCode;
+            model.RefCode = runnCode;
             model.CreateDate = DateTime.Now;
             model.DictStatus = true;
             _contextDbSCM.SkcDictMstrs.Add(model);

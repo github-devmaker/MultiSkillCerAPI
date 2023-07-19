@@ -5,7 +5,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
 <Project>
   <PropertyGroup>
     <_PublishTargetUrl>D:\git\MultiSkillCerAPI\LicenseAPI\bin\Release\net6.0\publish\</_PublishTargetUrl>
-    <History>True|2023-06-13T12:23:41.5021800Z;</History>
+    <History>True|2023-07-19T07:09:54.4427323Z;True|2023-07-19T14:07:44.1972300+07:00;True|2023-07-19T14:04:59.8307602+07:00;True|2023-07-19T13:55:50.3038785+07:00;True|2023-07-19T09:58:20.1789260+07:00;True|2023-06-15T11:29:12.9739156+07:00;True|2023-06-13T19:23:41.5021800+07:00;</History>
     <LastFailureDetails />
   </PropertyGroup>
 </Project>
