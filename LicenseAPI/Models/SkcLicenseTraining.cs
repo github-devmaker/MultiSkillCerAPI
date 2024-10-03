@@ -11,6 +11,8 @@ public partial class SkcLicenseTraining
 
     public string? DictCode { get; set; }
 
+    public string? RefCode { get; set; }
+
     public DateTime? EffectiveDate { get; set; }
 
     public DateTime? ExpiredDate { get; set; }

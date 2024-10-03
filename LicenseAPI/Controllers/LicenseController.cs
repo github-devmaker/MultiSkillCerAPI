@@ -2,9 +2,11 @@
 using LicenseAPI.Models;
 using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.OpenApi.Validations;
+using System.Data;
 using System.Globalization;
 using System.Reflection.Emit;
 using System.Text.Json;
@@ -19,7 +21,7 @@ namespace LicenseAPI.Controllers
         private readonly dbHRM _contextDbHRM;
         private readonly dbBCS _contextDbBCS;
         private readonly dbIoTFac2 _contextDbIoTFac2;
-
+        private SqlConnectDB dbSCM = new SqlConnectDB("dbSCM");
         public LicenseController(dbSCM contextDbSCM, dbHRM contextDbHRM, dbBCS contextDbBCS, dbIoTFac2 contextDbIoTFac2)
         {
             _contextDbSCM = contextDbSCM;
@@ -94,6 +96,19 @@ namespace LicenseAPI.Controllers
                               }
                               ).ToListAsync();
             return Ok(priv);
+        }
+
+        [HttpGet]
+        [Route("/license/dictmstr/privilege/{empcode}")]
+        public async Task<IActionResult> GetPrivilege(string empcode)
+        {
+            SqlCommand sql = new SqlCommand();
+            sql.CommandText = $@"SELECT [CODE]   FROM [dbSCM].[dbo].[DictMstr] WHERE DICT_SYSTEM = 'LICENSE__MANAGEMENT_SYSTEM' AND DICT_STATUS = 'ACTIVE' AND CODE = '{empcode}'";
+            DataTable dt = dbSCM.Query(sql);
+            return Ok(new
+            {
+                privilege = dt.Rows.Count > 0 ? true : false
+            });
         }
 
         [HttpPost]
@@ -202,15 +217,15 @@ namespace LicenseAPI.Controllers
             {
                 context = context.Where(x => x.RefCode == obj.RefCode).ToList();
             }
-            return Ok(new { data = context.OrderBy(x=>x.DictDesc) });
+            return Ok(new { data = context.OrderBy(x => x.Code) });
         }
 
         [HttpPost]
         [Route("/dict/license")]
         public IActionResult DictLicense()
         {
-            var context =  _contextDbSCM.SkcDictMstrs.Where(x=>x.DictType == "LICENSE" && x.Code == x.RefCode && x.DictStatus == true).ToList();
-            return Ok(new { data = context.OrderBy(x=>x.DictDesc)});
+            var context = _contextDbSCM.SkcDictMstrs.Where(x => x.DictType == "LICENSE" && x.Code == x.RefCode && x.DictStatus == true).ToList().OrderByDescending(x => x.Code);
+            return Ok(new { data = context.OrderByDescending(x => x.Code) });
         }
 
         [HttpPost]
@@ -226,11 +241,11 @@ namespace LicenseAPI.Controllers
         [Route("/dict/format/all")]
         public async Task<IActionResult> dictFormatAll()
         {
-            List<SkcDictMstr> listFac = await _contextDbSCM.SkcDictMstrs.Where(x=>x.DictType == "FAC").ToListAsync();
-            foreach(SkcDictMstr itemFac in listFac)
+            List<SkcDictMstr> listFac = await _contextDbSCM.SkcDictMstrs.Where(x => x.DictType == "FAC").ToListAsync();
+            foreach (SkcDictMstr itemFac in listFac)
             {
                 List<SkcDictMstr> listLine = await _contextDbSCM.SkcDictMstrs.Where(x => x.DictType == "LINE" && x.RefCode == itemFac.Code && x.RefItem == "FAC").ToListAsync();
-                foreach(SkcDictMstr itemLine in listLine)
+                foreach (SkcDictMstr itemLine in listLine)
                 {
                     List<SkcDictMstr> listSt = await _contextDbSCM.SkcDictMstrs.Where(x => x.DictType == "STATION" && x.RefCode == itemFac.Code && x.RefItem == "LINE").ToListAsync();
                 }
@@ -361,7 +376,7 @@ namespace LicenseAPI.Controllers
             int runnCode = 1;
             if (obj.code == "" || obj.code == null)
             {
-                var lastItem = _contextDbSCM.SkcDictMstrs.Where(x => x.DictType == obj.dictType).OrderByDescending(x => x.Code).Select(x=>x.Code).FirstOrDefault();
+                var lastItem = _contextDbSCM.SkcDictMstrs.Where(x => x.DictType == obj.dictType).OrderByDescending(x => x.Code).Select(x => x.Code).FirstOrDefault();
                 if (lastItem.Count() > 0)
                 {
                     runnCode = Convert.ToInt32(lastItem) + 1;
@@ -403,6 +418,7 @@ namespace LicenseAPI.Controllers
         [Route("/training/add")]
         public async Task<ActionResult> TrainingAdd([FromBody] SkcLicenseTraining item)
         {
+
             item.CreateDate = DateTime.Now;
             item.AlertDate = DateTime.Parse(item.ExpiredDate.ToString()).AddMonths(-3);
             _contextDbSCM.SkcLicenseTrainings.Add(item);
@@ -426,20 +442,34 @@ namespace LicenseAPI.Controllers
                                    train.Empcode,
                                    train.EffectiveDate,
                                    train.ExpiredDate,
-                                   train.CreateDate
+                                   train.CreateDate,
+                                   train.RefCode,
+                                   train.DictCode
                                }
                         ).ToListAsync();
-            var result = (from x in items
-                          select new
-                          {
-                              x.TrId,
-                              x.Empcode,
-                              name = (from user in _contextDbHRM.Employees where user.Code == x.Empcode select (user.Pren.ToUpper() + user.Name + " " + user.Surn)),
-                              x.EffectiveDate,
-                              x.ExpiredDate,
-                              x.CreateDate
-                          }).OrderByDescending(x => x.CreateDate);
-            return Ok(result);
+            if (obj.RefCode != "0" && obj.RefCode != "")
+            {
+                items = items.Where(x => x.RefCode == obj.RefCode).ToList();
+            }
+            if (items.Count > 0)
+            {
+                var result = (from x in items.DefaultIfEmpty()
+                              select new
+                              {
+                                  x.TrId,
+                                  x.Empcode,
+                                  name = (from user in _contextDbHRM.Employees where user.Code == x.Empcode select (user.Pren.ToUpper() + user.Name + " " + user.Surn)),
+                                  x.EffectiveDate,
+                                  x.ExpiredDate,
+                                  x.CreateDate,
+                                  x.RefCode,
+                              }).OrderByDescending(x => x.CreateDate);
+                return Ok(result);
+            }
+            else
+            {
+                return Ok();
+            }
         }
 
         [HttpGet]
@@ -471,7 +501,7 @@ namespace LicenseAPI.Controllers
             DateTime EDate = DateTime.Parse(DateTime.Now.ToString("yyyy-MM-dd 20:00:00"));
             DateTime endDate = DateTime.Today;
             endDate = endDate.AddMonths(-5);
-            var lastLogin = (from x in _contextDbSCM.SkcCheckInOutLogs where x.DictCode == st select new { x.ChkEmpcode ,x.ChkId}).OrderByDescending(x=>x.ChkId).FirstOrDefault();
+            var lastLogin = (from x in _contextDbSCM.SkcCheckInOutLogs where x.DictCode == st select new { x.ChkEmpcode, x.ChkId }).OrderByDescending(x => x.ChkId).FirstOrDefault();
             int Year = DateTime.Now.AddYears(DateTime.Now.Month <= 4 ? -1 : 0).Year;
             DateTime FirstDateOfYear = DateTime.Parse(Convert.ToString(Year) + "-04-01 08:00:00");
             //var LeakCheck = _contextDbIoTFac2.EtdLeakChecks.Where(x => (x.StampTime >= SDate && x.StampTime <= EDate) && x.LineName == line && x.Brazing == stOld).GroupBy(x => x.EmpCode).Select(g => new { CntSerialNo = g.Count(), EmpCode = g.Key });
@@ -479,7 +509,8 @@ namespace LicenseAPI.Controllers
             {
                 //if (LeakCheck.Count() > 0 && LeakCheck.FirstOrDefault().EmpCode != null && lastLogin.ChkEmpcode == LeakCheck.FirstOrDefault().EmpCode)
                 //{
-                if (lastLogin.ChkEmpcode != "") {
+                if (lastLogin.ChkEmpcode != "")
+                {
                     //var empCode = LeakCheck.FirstOrDefault().EmpCode;
                     var empCode = lastLogin.ChkEmpcode;
                     var daily = (from x in _contextDbIoTFac2.BrazingCertDataLogs
@@ -491,12 +522,12 @@ namespace LicenseAPI.Controllers
                     //               select new { CountFG = x.CountFg });
 
                     var accuFG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
-                                 where x.EmpCode == empCode
-                                 select new { CountFG = x.CountFg });
+                                  where x.EmpCode == empCode
+                                  select new { CountFG = x.CountFg });
                     var accuNG = (from x in _contextDbIoTFac2.BrazingCertDataLogs
-                                   where x.EmpCode == empCode 
-                                   && x.UpdateDate >= FirstDateOfYear && x.UpdateDate <= DateTime.Now
-                                   select new { CountNG = x.CountNg }); // WHERE วันแรกที่ตัดรอบบิลวันที่ 1 เดือน 4
+                                  where x.EmpCode == empCode
+                                  && x.UpdateDate >= FirstDateOfYear && x.UpdateDate <= DateTime.Now
+                                  select new { CountNG = x.CountNg }); // WHERE วันแรกที่ตัดรอบบิลวันที่ 1 เดือน 4
 
                     //var accus = (from x in _contextDbIoTFac2.BrazingCertDataLogs
                     //             where x.EmpCode == empCode && x.Pddate >= DateTime.Parse(DateTime.Now.ToString("yyyy-01-01")) && x.Pddate >= DateTime.Parse(DateTime.Now.ToString("yyyy-MM-dd"))
@@ -518,7 +549,7 @@ namespace LicenseAPI.Controllers
                     //{
                     //    return Ok(new { daily = new { ok = 0, ng = 0 }, accu = new { ok = 0, ng = 0 }, chart = itemChart });
                     //}
-                    return Ok(new { daily = new { ok = (daily != null ? daily.CountFg : 0), ng = (daily != null ? daily.CountNg : 0)}, accu = new { ok = accuFG.Sum(x => x.CountFG), ng = accuNG.Sum(x => x.CountNG) }, chart = itemChart });
+                    return Ok(new { daily = new { ok = (daily != null ? daily.CountFg : 0), ng = (daily != null ? daily.CountNg : 0) }, accu = new { ok = accuFG.Sum(x => x.CountFG), ng = accuNG.Sum(x => x.CountNG) }, chart = itemChart });
                 }
                 else
                 {
@@ -530,7 +561,7 @@ namespace LicenseAPI.Controllers
                     return Ok(new { daily = new { ok = 0, ng = 0 }, accu = new { ok = 0, ng = 0 }, chart = itemChart });
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 for (int i = 1; i <= 6; i++)
                 {
@@ -588,7 +619,6 @@ namespace LicenseAPI.Controllers
         }
 
 
-      
     }
 
     internal class ItemChart

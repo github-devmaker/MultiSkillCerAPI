@@ -130,6 +130,9 @@ public partial class dbSCM : DbContext
             entity.Property(e => e.ExpiredDate)
                 .HasColumnType("datetime")
                 .HasColumnName("EXPIRED_DATE");
+            entity.Property(e => e.RefCode)
+                .HasMaxLength(10)
+                .HasColumnName("REF_CODE");
             entity.Property(e => e.TrStatus).HasColumnName("TR_STATUS");
         });
 
